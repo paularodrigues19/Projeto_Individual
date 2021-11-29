@@ -1,0 +1,269 @@
+<!DOCTYPE html>
+<html lang="pt-br">
+
+<head>
+    <meta charset="UTF-8">
+    <meta http-equiv="X-UA-Compatible" content="IE=edge">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YG | Bem-Vindo</title>
+
+    <link rel="stylesheet" href="../css/style.css">
+    <link rel="stylesheet" href="dashboards.css">
+    <script src="../assets/js/funcoes.js"></script>
+
+    <link rel="preconnect" href="https://fonts.gstatic.com">
+    <link
+        href="https://fonts.googleapis.com/css2?family=Exo+2:ital,wght@0,100;0,200;0,300;0,400;0,500;0,600;0,700;0,800;0,900;1,100;1,200;1,300;1,400;1,500;1,600;1,700;1,800;1,900&display=swap"
+        rel="stylesheet">
+
+    <!-- scripts do Chart.js -->
+    <script type="text/javascript" src="https://www.chartjs.org/dist/2.8.0/Chart.min.js"></script>
+
+</head>
+
+<body onload="validarSessao()" >
+    <!-- obterDadosGrafico(1) -->
+    <div class="janela">
+        <div class="header-left_dash-header">
+            <div class="elements">
+                <img src="../assets/imgs/logo.png">
+                <div class="hello">
+                    <h3>Olá, <span id="b_usuario"></span>!</h3>
+                </div>
+
+                <h2 style="color: #d0e2ec;">Desempenho</h2>
+                <!--    <div class="btn-nav">
+                    <a href="./dashboard.html">
+                    </a>
+                </div>-->
+
+                <div class="btn-nav" onclick="limparSessao()">
+                    <a href="../index.html">
+                        <h3>Sair</h3>
+                    </a>
+                </div>
+            </div>
+        </div>
+        <div class="dash">
+            <div class="regua">
+                <div class="item-regua perigo-quente">
+                    <h4>Ruim</h4>
+                    <h2>Abaixo de 70</h2>
+                </div>
+                <div class="item-regua ideal">
+                    <h4>Médio</h4>
+                    <h2>Entre 70 e 80</h2>
+                </div>
+                <div class="item-regua alerta-frio">
+                    <h4>Bom</h4>
+                    <h2>Maior que 80</h2>
+                </div>
+            </div>
+
+            <h2><span id="b_usuario2"></span>, este foi seu desempenho hoje!</h2>
+            <div class="btns-dash">
+                <div class="graph">
+                    <canvas id="canvas_grafico" style="width: 500px;" height="500px"></canvas>
+                </div>
+                <div id="D2" style="display: flex; color: rgba(255, 0, 0, 0.603)">
+                    <div id="div_color" style="border-radius: 50%; width: 200px; height: 200px; margin: 100px;"></div>
+                </div>
+            </div>
+        
+        </div>
+    </div>
+
+</body>
+
+</html>
+
+<script>
+
+    var vt_habilidades = [0, 0, 0, 0, 0, 0]
+    var soma = 0;
+
+    for (var i = 0; i < vt_habilidades.length; i++) {
+        vt_habilidades[i] = Number(((Math.random() * 40)+60).toFixed());
+        soma = soma + vt_habilidades[i];
+    }
+    soma = soma/6;
+    var color;
+
+    if (soma < 70) {
+         div_color.style.backgroundColor = `#ff0000`;
+         color = `#ff0101c9`;
+    } else if (soma < 80) { 
+        div_color.style.backgroundColor = `#9e4dd4`;
+        color = `#9e4dd493`;
+    } else if (soma < 90) { 
+        div_color.style.backgroundColor = `#1b19ac`;
+        color = `#1b19ac93`;
+    }
+
+    // roxo background-color: #9e4dd4;
+    // azul background-color: #1b19ac;
+    // red background-color: red;
+
+
+
+    let proximaAtualizacao;
+    // Eu coloquei
+    const ctx = document.getElementById('canvas_grafico').getContext('2d');
+    const canvas_grafico = new Chart(ctx, {
+        type: 'radar',
+        data: {
+            labels: ['Dança', 'Vocal', 'Personalidade', 'Atuação', 'Trabalho em Grupo', 'Idiomas'],
+            datasets: [{
+                label: `Nota`,
+                data: [`${vt_habilidades[0]}`, `${vt_habilidades[1]}`, `${vt_habilidades[2]}`, `${vt_habilidades[3]}`, `${vt_habilidades[4]}`, `${vt_habilidades[5]}`],
+                backgroundColor: [
+                    `${color}`,
+                ],
+                borderColor: [
+                    `${color}`,
+                ],
+                borderWidth: 1
+            }]
+        },
+        options: {
+            maintainAspectRatio: false,
+            scales: {
+                rAxis: {
+                    grid: {
+                        color: 'black'
+                    },
+                    angleLines: {
+                        color: 'black'
+                    },
+                    ticks: {
+                        color: 'black'
+                    }
+                }
+            }
+        }
+    });
+    // Termina aqui oq eu coloquei
+
+
+
+    //verificar_autenticacao();
+
+    // altere aqui como os dados serão exibidos
+    // e como são recuperados do BackEnd
+    function obterDadosGrafico(idAquario) {
+        if (proximaAtualizacao != undefined) {
+            clearTimeout(proximaAtualizacao);
+        }
+
+        fetch(`/medidas/ultimas/${idAquario}`, { cache: 'no-store' }).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (resposta) {
+                    console.log(`Dados recebidos: ${JSON.stringify(resposta)}`);
+                    resposta.reverse();
+
+                    plotarGrafico(resposta, idAquario);
+                });
+            } else {
+                console.error('Nenhum dado encontrado ou erro na API');
+            }
+        })
+            .catch(function (error) {
+                console.error(`Erro na obtenção dos dados p/ gráfico: ${error.message}`);
+            });
+
+    };
+
+    // só altere aqui se souber o que está fazendo!
+    function plotarGrafico(resposta, idAquario) {
+        console.log('iniciando plotagem do gráfico...');
+
+        var dados = {
+            labels: [],
+            datasets: [
+                {
+                    yAxisID: 'y-umidade',
+                    label: 'Umidade',
+                    borderColor: '#32B9CD',
+                    backgroundColor: '#32b9cd8f',
+                    fill: true,
+                    data: []
+                }
+            ]
+        };
+
+        for (i = 0; i < resposta.length; i++) {
+            var registro = resposta[i];
+            dados.labels.push(registro.momento_grafico);
+            dados.datasets[0].data.push(registro.umidade);
+        }
+
+        console.log(JSON.stringify(dados));
+
+        var ctx = canvas_grafico.getContext('2d');
+        window.grafico_linha = Chart.Line(ctx, {
+            data: dados,
+            //Configurações do gráfico
+            options: {
+                responsive: true,
+                animation: { duration: 500 },
+                hoverMode: 'index',
+                stacked: false,
+                title: {
+                    display: true,
+                    text: 'Histórico recente de umidade'
+                },
+                scales: {
+                    yAxes: [{
+                        type: 'linear',
+                        display: true,
+                        position: 'left',
+                        id: 'y-temperatura',
+                    }, {
+                        type: 'linear',
+                        display: true,
+                        position: 'right',
+                        id: 'y-umidade',
+
+                        gridLines: {
+                            drawOnChartArea: false,
+                        },
+                    }],
+                }
+            }
+        });
+
+        //Atualiza os dados de 2 em 2 segundos
+        //setTimeout(() => atualizarGrafico(idAquario, dados), 2000);
+    }
+
+    // só mexer se quiser alterar o tempo de atualização
+    // ou se souber o que está fazendo!
+    function atualizarGrafico(idAquario, dados) {
+        fetch(`/medidas/tempo-real/${idAquario}`, { cache: 'no-store' }).then(function (response) {
+            if (response.ok) {
+                response.json().then(function (novoRegistro) {
+
+                    console.log(`Dados recebidos: ${JSON.stringify(novoRegistro)}`);
+                    console.log(`Dados atuais do gráfico: ${dados}`);
+
+                    // tirando e colocando valores no gráfico
+                    dados.labels.shift(); // apagar o primeiro
+                    dados.labels.push(novoRegistro[0].momento_grafico); // incluir um novo momento
+                    dados.datasets[0].data.shift();  // apagar o primeiro de umidade
+                    dados.datasets[0].data.push(novoRegistro[0].umidade); // incluir uma nova medida de umidade
+
+                    window.grafico_linha.update();
+
+                    proximaAtualizacao = setTimeout(() => atualizarGrafico(idAquario, dados), 5000);
+                });
+            } else {
+                console.error('Nenhum dado encontrado ou erro na API');
+                proximaAtualizacao = setTimeout(() => atualizarGrafico(idAquario, dados), 5000);
+            }
+        })
+            .catch(function (error) {
+                console.error(`Erro na obtenção dos dados p/ gráfico: ${error.message}`);
+            });
+
+    }
+</script>
